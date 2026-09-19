@@ -146,10 +146,15 @@ pub fn build() -> Installed {
     // module — it references crypt32.lib (CertFreeCertificateContext
     // etc.) which our static link doesn't pull in, causing linker errors
     // during the librnp build step.
-    if cfg!(target_os = "windows") && env::var_os("BOTAN_CONFIGURE_CC").is_none() {
+    if cfg!(target_os = "windows") {
         unsafe {
-            env::set_var("BOTAN_CONFIGURE_CC", "gcc");
-            env::set_var("BOTAN_CONFIGURE_CC_BIN", "g++");
+            // Only the toolchain defaults respect a caller-provided
+            // value; the cert-store module disable applies to every
+            // windows build (crypt32.lib is never in the static link).
+            if env::var_os("BOTAN_CONFIGURE_CC").is_none() {
+                env::set_var("BOTAN_CONFIGURE_CC", "gcc");
+                env::set_var("BOTAN_CONFIGURE_CC_BIN", "g++");
+            }
             env::set_var("BOTAN_CONFIGURE_DISABLE_MODULES", "certstor_system_windows");
         }
     }
